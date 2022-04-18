@@ -5,6 +5,10 @@ import slackin from '../lib/index';
 describe('slackin', () => {
   describe('POST /invite', () => {
     beforeEach(() => {
+      nock('https://www.google.com')
+        .post('/recaptcha/api/siteverify')
+        .reply(200, { success: true });
+
       nock('https://myorg.slack.com')
         .get('/api/users.list')
         .query({token: 'mytoken', presence: '1'})
@@ -32,7 +36,9 @@ describe('slackin', () => {
     it("returns success for a successful invite", (done) => {
       let opts = {
         token: 'mytoken',
-        org: 'myorg'
+        org: 'myorg',
+        gcaptcha_secret: 'mygcaptcha_secret',
+        gcaptcha_sitekey: 'mygcaptcha_sitekey'
       };
 
       // TODO simplify mocking
@@ -44,7 +50,10 @@ describe('slackin', () => {
 
       request(app)
         .post('/invite')
-        .send({ email: 'foo@example.com' })
+        .send({
+          email: 'foo@example.com',
+          'g-recaptcha-response': 'my-g-recaptcha-response'
+        })
         .expect('Content-Type', /json/)
         .expect(200, { msg: 'WOOT. Check your email!' })
         .end(done);
@@ -53,7 +62,9 @@ describe('slackin', () => {
     it("returns a failure for a failure message", (done) => {
       let opts = {
         token: 'mytoken',
-        org: 'myorg'
+        org: 'myorg',
+        gcaptcha_secret: 'mygcaptcha_secret',
+        gcaptcha_sitekey: 'mygcaptcha_sitekey'
       };
 
       // TODO simplify mocking
@@ -68,7 +79,10 @@ describe('slackin', () => {
 
       request(app)
         .post('/invite')
-        .send({ email: 'foo@example.com' })
+        .send({
+          email: 'foo@example.com',
+          'g-recaptcha-response': 'my-g-recaptcha-response'
+        })
         .expect('Content-Type', /json/)
         .expect(400, { msg: "other error" })
         .end(done);
@@ -106,7 +120,9 @@ describe('slackin', () => {
     it('returns the contents of the environment variable LETSENCRYPT_CHALLENGE', (done) => {
       let opts = {
         token: 'mytoken',
-        org: 'myorg'
+        org: 'myorg',
+        gcaptcha_secret: 'mygcaptcha_secret',
+        gcaptcha_sitekey: 'mygcaptcha_sitekey'
       };
 
       let app = slackin(opts);
